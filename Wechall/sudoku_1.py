@@ -47,7 +47,8 @@ class Sudoku:
             self.finalCellValue(key, startingValues[key])
             
     def finalCellValue(self,cellID,desiredValue):
-        self.sudokuList[cellID].values = "|      " + desiredValue + "      |"       
+        self.sudokuList[cellID].values = "|      " + desiredValue + "      |"
+        self.eliminatorCheck()       
  
     def eliminatorCheck(self):
         for elem in self.sudokuList:
@@ -62,12 +63,17 @@ class Sudoku:
 
 
     def drawSudoku(self):
+        self.checkClustersForUnique()
         i = 0
         while i < len(self.sudokuList)-1:
             for col in range(0,self.numberOfCols):
                 print(self.sudokuList[i].values, end =" ")
                 i += 1
             print("")
+        print(self.buildSolution())
+
+            
+            
 
     def checkClustersForUnique(self):
         breaker = False
@@ -76,23 +82,39 @@ class Sudoku:
             for item in self.sudokuList:
                 if str(item.cluster) == clusterValue and item.values[0] != "|":
                     cluster.append(item)
-                uniqueValues = []
-                for itemValue in listOfValues:
-                    for item in cluster:
-                        if itemValue in item.values:
-                            uniqueValues.append(item.id)
-                        print(uniqueValues)
-                    if len(uniqueValues) == 1:
-                        print("removed" + str(uniqueValues[0]))
-                        self.finalCellValue(uniqueValues[0],itemValue)
-                        breaker = True
-                        break
-                    if breaker == True:
-                        break
-                if breaker == True:
-                    break
+            self.checkValuesForUnique(cluster)        
+            cluster = []
+
+
+    def checkValuesForUnique(self, cluster):
+        breaker = False
+        uniqueValues = []
+        for itemValue in listOfValues:
+            for item in cluster:
+                if itemValue in item.values:
+                    uniqueValues.append(item.id)
+
+            if len(uniqueValues) == 1:
+                print("removed" + str(uniqueValues[0]))
+                self.finalCellValue(uniqueValues[0],itemValue)
+                uniqueValues=[]
+                breaker = True
+                break
+            if len(uniqueValues) == 2:
+                print(itemValue, uniqueValues, self.sudokuList[int(uniqueValues[0])].values, self.sudokuList[uniqueValues[1]].values)
+            uniqueValues = []
             if breaker == True:
                 break
+
+#                   breaker = True
+#                   break
+#               if breaker == True:
+#                   uniqueValues=[]
+#                   break
+#           cluster=[]    
+#           if breaker == True:
+#               uniqueValues=[]
+#               break
 
 #        if breaker == False:
 #            print(test.drawSudoku())
@@ -107,14 +129,17 @@ class Sudoku:
     def buildSolution(self):
         solution = ""
         for item in self.sudokuList:
-            solution = solution + str(item.values[7])
+            if item.values[0] == "|":
+                solution = solution + str(item.values[7])
         return(solution.lower())
 
 
             
 test = Sudoku(13,13)
-print(test.drawSudoku())
-test.eliminatorCheck()
-test.checkClustersForUnique()
-print(test.drawSudoku())
-print(test.buildSolution())
+while True:
+    print(test.drawSudoku())
+    user = input("konec?:")
+    if user == "a":
+        break
+    else:
+        print(test.drawSudoku())

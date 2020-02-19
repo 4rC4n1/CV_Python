@@ -35,6 +35,9 @@ class Sudoku:
     def __init__(self, numberOfRows, numberOfCols):
         counter = 0
         mapIndex = 0
+        self.loopBreaker = True
+        self.testTry = False
+        self.deadEndCounter = 0
         self.sudokuList = []
         self.numberOfCols = numberOfCols
         for nrow in range(0, numberOfRows):
@@ -65,15 +68,15 @@ class Sudoku:
     def drawSudoku(self):
         self.checkClustersForUnique()
         i = 0
-        while i < len(self.sudokuList)-1:
-            for col in range(0,self.numberOfCols):
-                print(self.sudokuList[i].values, end =" ")
-                i += 1
-            print("")
-        print(self.buildSolution())
-
-            
-            
+        if self.testTry == False:
+            while i < len(self.sudokuList)-1:
+                for col in range(0,self.numberOfCols):
+                    print(self.sudokuList[i].values, end =" ")
+                    i += 1
+                print("")
+        elif self.testTry == True:
+            print(self.buildSolution())
+        self.buildSolution()
 
     def checkClustersForUnique(self):
         breaker = False
@@ -85,7 +88,6 @@ class Sudoku:
             self.checkValuesForUnique(cluster)        
             cluster = []
 
-
     def checkValuesForUnique(self, cluster):
         breaker = False
         uniqueValues = []
@@ -96,35 +98,22 @@ class Sudoku:
 
             if len(uniqueValues) == 1:
                 print("removed" + str(uniqueValues[0]))
+                self.deadEndCounter = 0
                 self.finalCellValue(uniqueValues[0],itemValue)
                 uniqueValues=[]
                 breaker = True
                 break
-            if len(uniqueValues) == 2:
-                print(itemValue, uniqueValues, self.sudokuList[int(uniqueValues[0])].values, self.sudokuList[uniqueValues[1]].values)
+#            if len(uniqueValues) == 3:
+#                print(itemValue, uniqueValues, self.sudokuList[int(uniqueValues[0])].values, self.sudokuList[uniqueValues[1]].values, self.sudokuList[uniqueValues[2]].values)
             uniqueValues = []
             if breaker == True:
                 break
-
-#                   breaker = True
-#                   break
-#               if breaker == True:
-#                   uniqueValues=[]
-#                   break
-#           cluster=[]    
-#           if breaker == True:
-#               uniqueValues=[]
-#               break
-
-#        if breaker == False:
-#            print(test.drawSudoku())
-#            print("Another run?")
-#            nextStep = input()
-#            if nextStep != "y":
-#                sys.exit()
-#
-#        else:
-#            self.eliminatorCheck()
+        self.deadEndCounter += 1 
+        if self.deadEndCounter >= 10 and self.testTry == False:
+            self.deadEnd()
+        elif self.deadEndCounter >= 10 and self.testTry == True:
+            self.deadEndCounter = 0
+            self.loopBreaker = False
     
     def buildSolution(self):
         solution = ""
@@ -133,13 +122,50 @@ class Sudoku:
                 solution = solution + str(item.values[7])
         return(solution.lower())
 
+    def deadEnd(self):
+        self.lastSolvedCount = self.countSolvedFields(self.sudokuList)
+        print("Je vyřešeno: ", self.lastSolvedCount)
+        user = input("Pokračovat?")
+        if user == "a":
+            sys.exit()
+        else:
+            self.deadEndCounter = 0
+            self.bruteForceSolver()
 
+        
+    def bruteForceSolver(self):
+        self.backupData = self.sudokuList
+        self.count = self.lastSolvedCount
+        for item in self.sudokuList:
+            if "[" == item.values[0]:
+                testCases = item.values.replace(" ","").replace("[", "").replace("]","")
+                for char in testCases:
+                    print (testCases, char)                   
+                    self.testTry = True
+                    print(item.id)
+                    self.finalCellValue(item.id,char)
+                    self.solveSudoku()
+                    if self.count < self.lastSolvedCount:
+                        self.count = self.lastSolvedCount
+                        goodID = item.id
+                        goodChar = char
+                        print(item.id, char)
+                    self.sudokuList = self.backupData
+        self.sudokuList[goodID].values = "[      " + goodChar + "      ]"
+        self.testTry = False            
+
+    def solveSudoku(self):
+        while self.loopBreaker == True:
+            self.drawSudoku()
+        self.loopBreaker = False    
+
+    def countSolvedFields(self, data):
+        numberOfSolved = 0
+        for item in data:
+            if "|" in item.values:
+                numberOfSolved += 1
+        return(numberOfSolved)
+        
             
 test = Sudoku(13,13)
-while True:
-    print(test.drawSudoku())
-    user = input("konec?:")
-    if user == "a":
-        break
-    else:
-        print(test.drawSudoku())
+test.solveSudoku()
